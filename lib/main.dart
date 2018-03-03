@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import "dart:developer";
 
 void main() => runApp(new MyApp());
 
@@ -29,6 +31,7 @@ class _HomePageState extends State<HomePage> {
   String _comment;
   static const List<String> timeList = const ["Breakfast", "Lunch", "Dinner", "Bedtime"];
   String _time = timeList[0];
+  final firebaseReference = FirebaseDatabase.instance.reference();
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +97,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _submit(){
+  void _toLogPage(){
     Navigator.of(context).push(
       new MaterialPageRoute(builder: (context) {
         return new Scaffold(
@@ -103,5 +106,32 @@ class _HomePageState extends State<HomePage> {
         );
       })
     );
+  }
+
+  void _submit() {
+    DataEntry entry = new DataEntry(new DateTime.now(), _time, _concentration, _comment);
+    firebaseReference.push().set(entry.toJson());
+    showDialog(context: context, child: new AlertDialog(
+      content: new Text("Entry Submitted"),
+    ));
+  }
+}
+
+class DataEntry {
+  DateTime date;
+  String time;
+  String concentration;
+  String comment;
+
+  DataEntry(this.date, this.time, this.concentration, this.comment);
+
+  toJson() {
+    return {
+      "date": date.toString(),
+      "time": time,
+      "concentration": concentration,
+      "comment": comment
+    };
+
   }
 }
