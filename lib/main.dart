@@ -1,6 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:async';
+
+final FirebaseAuth auth = FirebaseAuth.instance;
+final GoogleSignIn googleSignIn = new GoogleSignIn();
+String userID;
+
+Future<String> _testSignInWithGoogle() async {
+  final GoogleSignInAccount googleUser = await googleSignIn.signIn();
+  final GoogleSignInAuthentication googleAuth =
+  await googleUser.authentication;
+  final FirebaseUser user = await auth.signInWithGoogle(
+    accessToken: googleAuth.accessToken,
+    idToken: googleAuth.idToken,
+  );
+  assert(user.email != null);
+  assert(user.displayName != null);
+  assert(!user.isAnonymous);
+  assert(await user.getIdToken() != null);
+
+  final FirebaseUser currentUser = await auth.currentUser();
+  assert(user.uid == currentUser.uid);
+
+  userID = currentUser.uid;
+  print(userID);
+
+  return 'signInWithGoogle succeeded: $user';
+}
 
 void main() => runApp(new MyApp());
 
@@ -31,7 +60,7 @@ class _HomePageState extends State<HomePage> {
   String _comment;
   static const List<String> timeList = const ["Breakfast", "Lunch", "Dinner", "Bedtime"];
   String _time = timeList[0];
-  final firebaseReference = FirebaseDatabase.instance.reference();
+  final firebaseReference = FirebaseDatabase.instance.reference().child('users');
 
   final TextEditingController _concentrationController = new TextEditingController();
   final TextEditingController _commentsController = new TextEditingController();
@@ -98,6 +127,9 @@ class _HomePageState extends State<HomePage> {
             padding: new EdgeInsets.all(8.0),
             child: new RaisedButton(onPressed: _submit, child: new Text("Submit"))
           ),
+          new Padding(
+              padding: new EdgeInsets.all(8.0),
+              child: new RaisedButton(onPressed: _testSignInWithGoogle, child: new Text("Login"),))
         ],
       ),
     );
@@ -112,7 +144,7 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               new Flexible(
                   child: new FirebaseAnimatedList(
-                  query: firebaseReference.orderByChild("id"),
+                  query: firebaseReference.child(userID).orderByChild("id"),
                   reverse: false,
                   itemBuilder: (BuildContext context, DataSnapshot snapshot, Animation<double> animation, int index) {
                     return new ListTile(
@@ -135,7 +167,10 @@ class _HomePageState extends State<HomePage> {
 
   void _submit() {
     DataEntry entry = new DataEntry(new DateTime.now(), _time, _concentration, _comment);
-    firebaseReference.push().set(entry.toJson());
+
+    firebaseReference.child(userID).push().set(entry.toJson());
+
+    //firebaseReference.push().set(entry.toJson());
     showDialog(context: context, child: new AlertDialog(
       content: new Text("Entry Submitted"),
     ));
