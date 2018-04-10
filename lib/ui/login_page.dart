@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
     authUtil.auth.onAuthStateChanged
       .firstWhere((user) => user != null)
       .then((user) {
-        Navigator.of(context).pushNamed('/home_page');
+        Navigator.of(context).pushReplacementNamed('/home_page');
     });
     
     new Future.delayed(new Duration(seconds: 1)).then((_) => authUtil.authentication.signInWithGoogle());

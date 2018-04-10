@@ -41,8 +41,7 @@ class _LogPageState extends State<LogPage> {
                         trailing: new Text(_convertDate(
                             DateTime.parse(snapshot.value["date"]))),
                         onLongPress: () {
-                          FirebaseDatabase.instance
-                              .reference()
+                          firebaseReference.child(userID)
                               .child(snapshot.key.toString())
                               .remove();
                         },
